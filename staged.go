@@ -36,14 +36,14 @@ func get_git_prefix() string {
 	cmd.Stderr = os.Stderr
 	out, err := cmd.Output()
 	if err != nil {
-		log.Fatal("cannot find git directory")
+		log.Fatal("cannot find worktree prefix")
 	}
 	if len(out) == 0 {
 		return ""
 	}
 
 	if out[len(out)-1] != '\n' {
-		log.Fatalf("git directory looks wrong: %q", out)
+		log.Fatalf("prefix looks wrong: %q", out)
 	}
 	return string(out[:len(out)-1])
 }
