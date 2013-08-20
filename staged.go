@@ -31,17 +31,17 @@ func get_git_dir() (string, error) {
 	return string(out[:len(out)-1]), nil
 }
 
-func get_toplevel() string {
+func get_toplevel() (string, error) {
 	cmd := exec.Command("git", "rev-parse", "--show-toplevel")
 	cmd.Stderr = os.Stderr
 	out, err := cmd.Output()
 	if err != nil {
-		log.Fatal("cannot find toplevel directory")
+		return "", err
 	}
 	if len(out) == 0 || out[len(out)-1] != '\n' {
-		log.Fatalf("toplevel looks wrong: %q", out)
+		return "", fmt.Errorf("toplevel looks wrong: %q", out)
 	}
-	return string(out[:len(out)-1])
+	return string(out[:len(out)-1]), nil
 }
 
 // The subdirectory of the git worktree we are currently in, or empty
@@ -134,7 +134,10 @@ func main() {
 	if err != nil {
 		log.Fatalf("cannot make git dir absolute: %v", err)
 	}
-	toplevel := get_toplevel()
+	toplevel, err := get_toplevel()
+	if err != nil {
+		log.Fatalf("cannot find toplevel directory: %v", err)
+	}
 	prefix := get_git_prefix()
 
 	tmp, err := ioutil.TempDir(gitdir, "staged-")
