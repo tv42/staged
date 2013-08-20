@@ -18,17 +18,17 @@ func Usage() {
 	flag.PrintDefaults()
 }
 
-func get_git_dir() string {
+func get_git_dir() (string, error) {
 	cmd := exec.Command("git", "rev-parse", "--git-dir")
 	cmd.Stderr = os.Stderr
 	out, err := cmd.Output()
 	if err != nil {
-		log.Fatal("cannot find git directory")
+		return "", err
 	}
 	if len(out) == 0 || out[len(out)-1] != '\n' {
-		log.Fatalf("git directory looks wrong: %q", out)
+		return "", fmt.Errorf("git directory looks wrong: %q", out)
 	}
-	return string(out[:len(out)-1])
+	return string(out[:len(out)-1]), nil
 }
 
 func get_toplevel() string {
@@ -126,8 +126,11 @@ func main() {
 		os.Exit(1)
 	}
 
-	gitdir := get_git_dir()
-	gitdir, err := filepath.Abs(gitdir)
+	gitdir, err := get_git_dir()
+	if err != nil {
+		log.Fatalf("cannot find git directory: %v", err)
+	}
+	gitdir, err = filepath.Abs(gitdir)
 	if err != nil {
 		log.Fatalf("cannot make git dir absolute: %v", err)
 	}
