@@ -113,32 +113,33 @@ func unsetenv(env []string, name string) []string {
 	return env
 }
 
-func run(command string, args ...string) error {
+func run(command string, args ...string) (err error) {
 	gitdir, err := get_git_dir()
 	if err != nil {
-		log.Fatalf("cannot find git directory: %v", err)
+		return fmt.Errorf("cannot find git directory: %v", err)
 	}
 	gitdir, err = filepath.Abs(gitdir)
 	if err != nil {
-		log.Fatalf("cannot make git dir absolute: %v", err)
+		return fmt.Errorf("cannot make git dir absolute: %v", err)
 	}
 	toplevel, err := get_toplevel()
 	if err != nil {
-		log.Fatalf("cannot find toplevel directory: %v", err)
+		return fmt.Errorf("cannot find toplevel directory: %v", err)
 	}
 	prefix, err := get_git_prefix()
 	if err != nil {
-		log.Fatalf("cannot find worktree prefix: %v", err)
+		return fmt.Errorf("cannot find worktree prefix: %v", err)
 	}
 
 	tmp, err := ioutil.TempDir(gitdir, "staged-")
 	if err != nil {
-		log.Fatalf("cannot create tempdir: %v", err)
+		return fmt.Errorf("cannot create tempdir: %v", err)
 	}
 	defer func() {
-		err := os.RemoveAll(tmp)
-		if err != nil {
-			log.Fatalf("tempdir cleanup failed: %v", err)
+		err2 := os.RemoveAll(tmp)
+		if err2 != nil {
+			// override the success with this cleanup error
+			err = fmt.Errorf("tempdir cleanup failed: %v", err)
 		}
 	}()
 
@@ -146,7 +147,7 @@ func run(command string, args ...string) error {
 	checkout_dir := tmp
 	inside_gopath, err := is_inside_gopath(toplevel)
 	if err != nil {
-		log.Fatalf("cannot determine gopath: %v", err)
+		return fmt.Errorf("cannot determine gopath: %v", err)
 	}
 	if inside_gopath != "" {
 		gopath_list := []string{checkout_dir}
@@ -166,7 +167,7 @@ func run(command string, args ...string) error {
 		cmd.Stderr = os.Stderr
 		err = cmd.Run()
 		if err != nil {
-			log.Fatalf("cannot checkout index: %v", err)
+			return fmt.Errorf("cannot checkout index: %v", err)
 		}
 	}
 
@@ -185,7 +186,7 @@ func run(command string, args ...string) error {
 
 		err = cmd.Run()
 		if err != nil {
-			log.Fatalf("command failed: %v", err)
+			return fmt.Errorf("command failed: %v", err)
 		}
 	}
 	return nil
