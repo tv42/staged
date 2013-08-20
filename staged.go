@@ -46,21 +46,21 @@ func get_toplevel() (string, error) {
 
 // The subdirectory of the git worktree we are currently in, or empty
 // string for root of worktree.
-func get_git_prefix() string {
+func get_git_prefix() (string, error) {
 	cmd := exec.Command("git", "rev-parse", "--show-prefix")
 	cmd.Stderr = os.Stderr
 	out, err := cmd.Output()
 	if err != nil {
-		log.Fatal("cannot find worktree prefix")
+		return "", err
 	}
 	if len(out) == 0 {
-		return ""
+		return "", nil
 	}
 
 	if out[len(out)-1] != '\n' {
-		log.Fatalf("prefix looks wrong: %q", out)
+		return "", fmt.Errorf("prefix looks wrong: %q", out)
 	}
-	return string(out[:len(out)-1])
+	return string(out[:len(out)-1]), nil
 }
 
 // Check whether the path is under a $GOPATH/src directory. If so,
@@ -138,7 +138,10 @@ func main() {
 	if err != nil {
 		log.Fatalf("cannot find toplevel directory: %v", err)
 	}
-	prefix := get_git_prefix()
+	prefix, err := get_git_prefix()
+	if err != nil {
+		log.Fatalf("cannot find worktree prefix: %v", err)
+	}
 
 	tmp, err := ioutil.TempDir(gitdir, "staged-")
 	if err != nil {
