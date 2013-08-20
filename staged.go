@@ -65,30 +65,30 @@ func get_git_prefix() (string, error) {
 
 // Check whether the path is under a $GOPATH/src directory. If so,
 // return the subtree path from there on. If not, return empty string.
-func is_inside_gopath(p string) string {
+func is_inside_gopath(p string) (string, error) {
 	// i am butchering the difference between filepath and path.
 	// i don't really care, right now.
 
 	abs, err := filepath.Abs(p)
 	if err != nil {
-		log.Fatalf("cannot make path absolute: %v", err)
+		return "", fmt.Errorf("cannot make path absolute: %v", err)
 	}
 	abs = path.Clean(abs)
 
 	for _, gopath := range filepath.SplitList(os.Getenv("GOPATH")) {
 		gopath, err := filepath.Abs(gopath)
 		if err != nil {
-			log.Fatalf("cannot make path absolute: %v", err)
+			return "", fmt.Errorf("cannot make path absolute: %v", err)
 		}
 		gopath = path.Clean(gopath)
 		src := path.Join(gopath, "src") + "/"
 
 		if strings.HasPrefix(abs, src) {
 			rest := abs[len(src):]
-			return rest
+			return rest, nil
 		}
 	}
-	return ""
+	return "", nil
 }
 
 // Remove a variable from the environment. Returns the new
@@ -156,7 +156,10 @@ func main() {
 
 	env := os.Environ()
 	checkout_dir := tmp
-	inside_gopath := is_inside_gopath(toplevel)
+	inside_gopath, err := is_inside_gopath(toplevel)
+	if err != nil {
+		log.Fatalf("cannot determine gopath: %v", err)
+	}
 	if inside_gopath != "" {
 		gopath_list := []string{checkout_dir}
 		gopath_list = append(gopath_list, filepath.SplitList(os.Getenv("GOPATH"))...)
