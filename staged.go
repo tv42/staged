@@ -113,19 +113,7 @@ func unsetenv(env []string, name string) []string {
 	return env
 }
 
-func main() {
-	prog := path.Base(os.Args[0])
-	log.SetFlags(0)
-	log.SetPrefix(prog + ": ")
-
-	flag.Usage = Usage
-	flag.Parse()
-
-	if flag.NArg() < 1 {
-		Usage()
-		os.Exit(1)
-	}
-
+func run(command string, args ...string) error {
 	gitdir, err := get_git_dir()
 	if err != nil {
 		log.Fatalf("cannot find git directory: %v", err)
@@ -183,11 +171,7 @@ func main() {
 	}
 
 	{
-		args := []string{}
-		if flag.NArg() > 1 {
-			args = flag.Args()[1:]
-		}
-		cmd := exec.Command(flag.Arg(0), args...)
+		cmd := exec.Command(command, args...)
 		cmd.Stdin = os.Stdin
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
@@ -203,5 +187,30 @@ func main() {
 		if err != nil {
 			log.Fatalf("command failed: %v", err)
 		}
+	}
+	return nil
+}
+
+func main() {
+	prog := path.Base(os.Args[0])
+	log.SetFlags(0)
+	log.SetPrefix(prog + ": ")
+
+	flag.Usage = Usage
+	flag.Parse()
+
+	if flag.NArg() < 1 {
+		Usage()
+		os.Exit(1)
+	}
+
+	args := []string{}
+	if flag.NArg() > 1 {
+		args = flag.Args()[1:]
+	}
+
+	err := run(flag.Arg(0), args...)
+	if err != nil {
+		log.Fatalf("%v", err)
 	}
 }
