@@ -1,5 +1,3 @@
-  $ T="$(mktemp -d --suffix=".staged.cram")"
-  $ trap "rm -rf -- \"$T\"" EXIT
   $ mkdir example
   $ cd example
   $ git init
