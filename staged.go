@@ -138,8 +138,14 @@ func run(command string, args ...string) (err error) {
 	defer func() {
 		err2 := os.RemoveAll(tmp)
 		if err2 != nil {
-			// override the success with this cleanup error
-			err = fmt.Errorf("tempdir cleanup failed: %v", err)
+			err2 = fmt.Errorf("tempdir cleanup failed: %v", err2)
+			if err == nil {
+				// override the success with this cleanup error
+				err = err2
+			} else {
+				// do not lose this message, even if we have something more important
+				log.Print(err2)
+			}
 		}
 	}()
 
