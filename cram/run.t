@@ -11,7 +11,9 @@
   > EOF
   $ cat >demo_test.go <<'EOF'
   > package demo
+  > 
   > import "testing"
+  > 
   > func TestFoo(t *testing.T) {
   >     if g, e := foo(), 42; g != e {
   >         t.Errorf("bad foo: %v != %v", g, e)
@@ -25,7 +27,7 @@
   ok * (glob)
   $ staged go test              # detects the problem
   # * (glob)
-  ./demo_test.go:4: undefined: foo
+  ./demo_test.go:6: undefined: foo
   FAIL\t* [build failed] (esc) (glob)
   staged: command failed: exit status 2
   [1]
